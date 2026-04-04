@@ -1,0 +1,18 @@
+.app {
+  padding: 1rem;
+}
+
+.stream-status {
+  margin: 1rem 0;
+}
+
+.stream-container {
+  display: flex;
+  justify-content: center;
+}
+
+.stream-video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
