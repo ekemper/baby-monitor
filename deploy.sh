@@ -15,8 +15,14 @@ REMOTE="${PI_USER}@${PI_HOST}"
 
 run_ssh() { sshpass -p "$PI_PASSWORD" ssh -o StrictHostKeyChecking=no "$REMOTE" "$@"; }
 
-echo "==> Pushing to origin…"
 cd "$SCRIPT_DIR"
+echo "==> Committing changes…"
+git add -A
+if ! git diff --cached --quiet; then
+  git commit -m "deploy: $(date '+%Y-%m-%d %H:%M')"
+fi
+
+echo "==> Pushing to origin…"
 git push
 
 echo "==> Pulling on Pi…"
@@ -31,5 +37,8 @@ run_ssh "TMPDIR=/var/tmp pip3 install --break-system-packages --no-cache-dir -q 
 echo "==> Syncing .env…"
 sshpass -p "$PI_PASSWORD" rsync -az "$SCRIPT_DIR/server/.env" "${REMOTE}:${PI_DIR}/server/.env"
 
-echo "==> Done. To start the server on the Pi:"
-echo "    ssh ${REMOTE} 'cd ${PI_DIR}/server && python3 main.py'"
+echo "==> Restarting server…"
+run_ssh "pkill -f 'python3 main.py' 2>/dev/null; sleep 1; cd ${PI_DIR}/server && nohup python3 main.py > /tmp/baby-monitor.log 2>&1 &"
+sleep 3
+echo "==> Checking server…"
+run_ssh "tail -5 /tmp/baby-monitor.log"
