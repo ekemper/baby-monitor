@@ -20,7 +20,7 @@ cd "$SCRIPT_DIR"
 git push
 
 echo "==> Pulling on Pi…"
-run_ssh "cd ${PI_DIR} && git pull"
+run_ssh "cd ${PI_DIR} && git clean -fd && git checkout -f && git pull"
 
 echo "==> Ensuring ffmpeg is installed…"
 run_ssh "which ffmpeg >/dev/null 2>&1 || sudo apt install -y ffmpeg"

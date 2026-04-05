@@ -166,7 +166,10 @@ def setup_ngrok() -> Optional[str]:
         return None
 
     try:
-        from pyngrok import ngrok
+        from pyngrok import ngrok, conf
+        system_ngrok = shutil.which("ngrok")
+        if system_ngrok:
+            conf.get_default().ngrok_path = system_ngrok
         ngrok.set_auth_token(authtoken)
         tunnel = ngrok.connect(addr=str(PORT), proto="http", hostname=domain)
         log.info("ngrok tunnel active: %s", tunnel.public_url)
