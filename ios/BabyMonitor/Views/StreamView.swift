@@ -26,6 +26,17 @@ struct StreamView: View {
                 }
             }
 
+            VStack {
+                Spacer()
+                Text("OK: \(manager.frameCount)  FAIL: \(manager.failCount)")
+                    .font(.caption)
+                    .foregroundStyle(.green)
+                    .padding(6)
+                    .background(.black.opacity(0.6))
+                    .cornerRadius(6)
+                    .padding(.bottom, 8)
+            }
+
             // Night mode toggle button
             VStack {
                 HStack {

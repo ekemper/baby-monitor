@@ -98,6 +98,15 @@ def capture_loop(frame_queue: queue.Queue[bytes]) -> None:
                     pass
 
 
+async def _send_with_timeout(ws: web.WebSocketResponse, data: bytes) -> bool:
+    """Send data to a WebSocket with a 2-second timeout. Returns False if failed."""
+    try:
+        await asyncio.wait_for(ws.send_bytes(data), timeout=2.0)
+        return True
+    except Exception:
+        return False
+
+
 async def broadcast_loop(app: web.Application) -> None:
     """Pull frames from queue and broadcast to all connected clients."""
     frame_queue: queue.Queue[bytes] = app["frame_queue"]
@@ -106,12 +115,11 @@ async def broadcast_loop(app: web.Application) -> None:
         frame = await loop.run_in_executor(None, frame_queue.get)
         if not connected_clients:
             continue
-        dead: list[web.WebSocketResponse] = []
-        for ws in connected_clients:
-            try:
-                await ws.send_bytes(frame)
-            except Exception:
-                dead.append(ws)
+        results = await asyncio.gather(
+            *(_send_with_timeout(ws, frame) for ws in connected_clients),
+            return_exceptions=True,
+        )
+        dead = [ws for ws, ok in zip(connected_clients, results) if ok is not True]
         for ws in dead:
             connected_clients.discard(ws)
             log.info("Removed dead client (%d viewers)", len(connected_clients))

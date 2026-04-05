@@ -13,6 +13,8 @@ final class WebSocketManager {
 
     var state: ConnectionState = .disconnected
     var currentFrame: UIImage?
+    var frameCount: Int = 0
+    var failCount: Int = 0
     var reconnectAttempt: Int = 0
     var shouldAutoReconnect: Bool = true
     var isAppBackgrounded: Bool = false
@@ -69,7 +71,22 @@ final class WebSocketManager {
             switch result {
             case .success(.data(let data)):
                 let image = UIImage(data: data)
-                Task { @MainActor in self.currentFrame = image }
+                Task { @MainActor in
+                    if let image {
+                        self.currentFrame = image
+                        self.frameCount += 1
+                        if self.frameCount <= 5 {
+                            print("[WS] Frame \(self.frameCount) OK: \(data.count) bytes, size=\(image.size)")
+                        }
+                    } else {
+                        self.failCount += 1
+                        if self.failCount <= 10 {
+                            let first = data.prefix(4).map { String(format: "%02x", $0) }.joined(separator: " ")
+                            let last = data.suffix(4).map { String(format: "%02x", $0) }.joined(separator: " ")
+                            print("[WS] Frame FAIL #\(self.failCount): \(data.count) bytes, first=[\(first)] last=[\(last)]")
+                        }
+                    }
+                }
                 self.receiveLoop()
             case .success(.string):
                 self.receiveLoop()
