@@ -40,41 +40,32 @@ log = logging.getLogger(__name__)
 connected_clients: set[web.WebSocketResponse] = set()
 server_start_time: float = 0.0
 
-FFMPEG = shutil.which("ffmpeg")
+V4L2_CTL = shutil.which("v4l2-ctl")
 SOI = b"\xff\xd8"
 EOI = b"\xff\xd9"
 
 
 def capture_loop(frame_queue: queue.Queue[bytes]) -> None:
-    """Run in thread: read MJPEG frames from ffmpeg, split on JPEG markers, put in queue."""
-    if not FFMPEG:
-        log.error("ffmpeg not found. Install with: sudo apt install ffmpeg")
+    """Run in thread: read MJPEG frames from v4l2-ctl, split on JPEG markers, put in queue."""
+    if not V4L2_CTL:
+        log.error("v4l2-ctl not found. Install with: sudo apt install v4l-utils")
         sys.exit(1)
 
     cmd = [
-        FFMPEG,
-        "-hide_banner", "-nostats", "-loglevel", "error",
-        "-probesize", "32", "-analyzeduration", "0",
-        "-f", "v4l2",
-        "-input_format", "mjpeg",
-        "-video_size", f"{WIDTH}x{HEIGHT}",
-        "-framerate", str(FPS),
-        "-thread_queue_size", "8",
-        "-i", DEVICE,
-        "-c:v", "copy",
-        "-threads", "1",
-        "-f", "image2pipe",
-        "-vcodec", "mjpeg",
-        "-",
+        V4L2_CTL,
+        "-d", DEVICE,
+        "--set-fmt-video", f"width={WIDTH},height={HEIGHT},pixelformat=MJPG",
+        "--stream-mmap", "--stream-count=0",
+        "--stream-to=-",
     ]
-    log.info("Capture starting: %s %dx%d @ %d FPS", DEVICE, WIDTH, HEIGHT, FPS)
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    log.info("Capture starting: %s %dx%d (v4l2-ctl MJPEG)", DEVICE, WIDTH, HEIGHT)
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     buf = bytearray()
 
     while True:
         chunk = proc.stdout.read(4096)
         if not chunk:
-            log.error("ffmpeg process exited unexpectedly")
+            log.error("v4l2-ctl process exited unexpectedly")
             sys.exit(1)
         buf.extend(chunk)
         while True:
