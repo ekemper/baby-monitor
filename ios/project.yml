@@ -21,3 +21,5 @@ targets:
       properties:
         BGTaskSchedulerPermittedIdentifiers:
           - com.babymonitor.connectionCheck
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true

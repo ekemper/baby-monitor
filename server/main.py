@@ -18,9 +18,9 @@ from aiohttp import web
 from dotenv import load_dotenv
 
 DEVICE = "/dev/video0"
-WIDTH = 320
-HEIGHT = 240
-FPS = 10
+WIDTH = 640
+HEIGHT = 360
+FPS = 30
 HOST = "0.0.0.0"
 PORT = 8765
 
