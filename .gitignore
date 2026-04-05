@@ -41,3 +41,4 @@ pnpm-debug.log*
 # Local tooling / secrets
 *.pem
 .ngrok*
+server/.env

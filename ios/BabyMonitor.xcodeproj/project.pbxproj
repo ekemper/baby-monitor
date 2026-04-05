@@ -1,0 +1,357 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0BAE0867A81F3370B5EE41BF /* BabyMonitorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C5E2B4CB33997894BE4B3EC /* BabyMonitorApp.swift */; };
+		3CE17C8B0286CE7B457B9731 /* BackgroundMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A7562E72F0DF23F1FED7665 /* BackgroundMonitor.swift */; };
+		442AEE83DB86893A7F2CEC22 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A535546B5B5AEF82855EAB8 /* ContentView.swift */; };
+		83C0DC4EE85863D142DB7701 /* PreferencesStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = B69B489C20CF8B9A94B90933 /* PreferencesStorage.swift */; };
+		921012B2C9ACAB9BA3EF8157 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7700F04122FB491BAC19255 /* Config.swift */; };
+		94E0E25D4BFCE9BFE13EC38C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8EDBCBEE69C8F7F5B4AC0EB5 /* Assets.xcassets */; };
+		9A6BCFFDF441B85B7ACF1D45 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFB86669932E0EA437CA2E34 /* NotificationManager.swift */; };
+		9EA5576735DB8F36BD8C18FB /* StreamView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9F766B5D94BDF6E9DB5A8DD /* StreamView.swift */; };
+		B233BF99CC69F87B9FD6A0E5 /* WebSocketManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC6FCBC87F524230BD357BC /* WebSocketManager.swift */; };
+		BBE79303A84D6C18D91D3B18 /* NightModeOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7590E4B7044FCBFAC04ACDFB /* NightModeOverlay.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		20FEC7FD7716F1FF4B8CA74B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		3FC6FCBC87F524230BD357BC /* WebSocketManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSocketManager.swift; sourceTree = "<group>"; };
+		6A7562E72F0DF23F1FED7665 /* BackgroundMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundMonitor.swift; sourceTree = "<group>"; };
+		7590E4B7044FCBFAC04ACDFB /* NightModeOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightModeOverlay.swift; sourceTree = "<group>"; };
+		7C5E2B4CB33997894BE4B3EC /* BabyMonitorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BabyMonitorApp.swift; sourceTree = "<group>"; };
+		8EDBCBEE69C8F7F5B4AC0EB5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		9A535546B5B5AEF82855EAB8 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		AFB86669932E0EA437CA2E34 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		B69B489C20CF8B9A94B90933 /* PreferencesStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesStorage.swift; sourceTree = "<group>"; };
+		D1410D03836DF872B9A36E82 /* BabyMonitor.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = BabyMonitor.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E7700F04122FB491BAC19255 /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
+		F9F766B5D94BDF6E9DB5A8DD /* StreamView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		2B5548980551457A98D7CA0E /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				9A535546B5B5AEF82855EAB8 /* ContentView.swift */,
+				7590E4B7044FCBFAC04ACDFB /* NightModeOverlay.swift */,
+				F9F766B5D94BDF6E9DB5A8DD /* StreamView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		31C5491EFE6BDC780B358E73 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				6A7562E72F0DF23F1FED7665 /* BackgroundMonitor.swift */,
+				AFB86669932E0EA437CA2E34 /* NotificationManager.swift */,
+				3FC6FCBC87F524230BD357BC /* WebSocketManager.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		A38430D0E7D700E66CA34D32 = {
+			isa = PBXGroup;
+			children = (
+				DCA6579D2D10E69886D8ECFA /* BabyMonitor */,
+				D4C1248BF0D311EF9DF2731C /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		B1D38CFB98F2C6488456AE82 /* Storage */ = {
+			isa = PBXGroup;
+			children = (
+				B69B489C20CF8B9A94B90933 /* PreferencesStorage.swift */,
+			);
+			path = Storage;
+			sourceTree = "<group>";
+		};
+		D4C1248BF0D311EF9DF2731C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				D1410D03836DF872B9A36E82 /* BabyMonitor.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		DCA6579D2D10E69886D8ECFA /* BabyMonitor */ = {
+			isa = PBXGroup;
+			children = (
+				8EDBCBEE69C8F7F5B4AC0EB5 /* Assets.xcassets */,
+				7C5E2B4CB33997894BE4B3EC /* BabyMonitorApp.swift */,
+				E7700F04122FB491BAC19255 /* Config.swift */,
+				20FEC7FD7716F1FF4B8CA74B /* Info.plist */,
+				31C5491EFE6BDC780B358E73 /* Services */,
+				B1D38CFB98F2C6488456AE82 /* Storage */,
+				2B5548980551457A98D7CA0E /* Views */,
+			);
+			path = BabyMonitor;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		2B35245CA38D1E76B0B7B3E5 /* BabyMonitor */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D5D441D25EC2942C8A3697E6 /* Build configuration list for PBXNativeTarget "BabyMonitor" */;
+			buildPhases = (
+				01EE633784D760CD4D825D0F /* Sources */,
+				19C90DA23F4979F809C2193E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BabyMonitor;
+			packageProductDependencies = (
+			);
+			productName = BabyMonitor;
+			productReference = D1410D03836DF872B9A36E82 /* BabyMonitor.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		74A4D09E44DC3F3A9D9DFDB2 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+				};
+			};
+			buildConfigurationList = 67068225983E5CEF05A188C8 /* Build configuration list for PBXProject "BabyMonitor" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = A38430D0E7D700E66CA34D32;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = D4C1248BF0D311EF9DF2731C /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				2B35245CA38D1E76B0B7B3E5 /* BabyMonitor */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		19C90DA23F4979F809C2193E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				94E0E25D4BFCE9BFE13EC38C /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		01EE633784D760CD4D825D0F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0BAE0867A81F3370B5EE41BF /* BabyMonitorApp.swift in Sources */,
+				3CE17C8B0286CE7B457B9731 /* BackgroundMonitor.swift in Sources */,
+				921012B2C9ACAB9BA3EF8157 /* Config.swift in Sources */,
+				442AEE83DB86893A7F2CEC22 /* ContentView.swift in Sources */,
+				BBE79303A84D6C18D91D3B18 /* NightModeOverlay.swift in Sources */,
+				9A6BCFFDF441B85B7ACF1D45 /* NotificationManager.swift in Sources */,
+				83C0DC4EE85863D142DB7701 /* PreferencesStorage.swift in Sources */,
+				9EA5576735DB8F36BD8C18FB /* StreamView.swift in Sources */,
+				B233BF99CC69F87B9FD6A0E5 /* WebSocketManager.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		0A7F15D86D78EB649DE9BB29 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		56EEBE84B624B278742420C4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = BabyMonitor/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.babymonitor.viewer;
+				SDKROOT = iphoneos;
+				SUPPORTS_XR_DESIGNED_FOR = NO;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		71EF2785A50BF71507381895 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		99147E5FB331101C578A9FB6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = BabyMonitor/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.babymonitor.viewer;
+				SDKROOT = iphoneos;
+				SUPPORTS_XR_DESIGNED_FOR = NO;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		67068225983E5CEF05A188C8 /* Build configuration list for PBXProject "BabyMonitor" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				71EF2785A50BF71507381895 /* Debug */,
+				0A7F15D86D78EB649DE9BB29 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		D5D441D25EC2942C8A3697E6 /* Build configuration list for PBXNativeTarget "BabyMonitor" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				99147E5FB331101C578A9FB6 /* Debug */,
+				56EEBE84B624B278742420C4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 74A4D09E44DC3F3A9D9DFDB2 /* Project object */;
+}

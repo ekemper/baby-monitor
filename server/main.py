@@ -1,19 +1,23 @@
 """
 Video-only WebSocket stream from USB webcam.
-Serves static (React build) + WebSocket on one port for ngrok. Local: 127.0.0.1:8765.
+Supports multiple concurrent viewers. Serves static (React build) + WebSocket
+on one port. Optional integrated ngrok tunnel via .env config.
 """
 import asyncio
+import json
 import logging
 import os
 import queue
 import sys
 import threading
-from typing import Any, Optional
+import time
+from typing import Optional
 
 import cv2
 from aiohttp import web
+from dotenv import load_dotenv
 
-# --- Constants (no config file) ---
+# --- Constants ---
 CAMERA_INDEX = 0
 WIDTH = 640
 HEIGHT = 480
@@ -23,9 +27,10 @@ PORT = 8765
 
 FRAME_QUEUE_MAXSIZE = 2
 
-# Static files (React build) for ngrok; relative to this file.
 SERVER_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(SERVER_DIR, "..", "client", "dist")
+
+load_dotenv(dotenv_path=os.path.join(SERVER_DIR, ".env"))
 
 logging.basicConfig(
     level=logging.INFO,
@@ -34,12 +39,12 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-# Shared: current WebSocket client (single client). Only main thread touches this.
-current_client: Optional[Any] = None
+connected_clients: set[web.WebSocketResponse] = set()
+server_start_time: float = 0.0
 
 
 def capture_loop(frame_queue: queue.Queue[bytes]) -> None:
-    """Run in thread: read from camera, encode MJPEG, put in queue (drop oldest if full)."""
+    """Run in thread: read from camera, encode JPEG, put in queue (drop oldest if full)."""
     cap = cv2.VideoCapture(CAMERA_INDEX)
     if not cap.isOpened():
         log.error("Could not open camera (index %d). Is it in use or disconnected?", CAMERA_INDEX)
@@ -71,39 +76,64 @@ def capture_loop(frame_queue: queue.Queue[bytes]) -> None:
                 pass
 
 
-async def send_loop(ws: web.WebSocketResponse, frame_queue: queue.Queue[bytes]) -> None:
-    """Pull frames from queue and send to client. Stops on disconnect or send error."""
+async def broadcast_loop(app: web.Application) -> None:
+    """Pull frames from queue and broadcast to all connected clients."""
+    frame_queue: queue.Queue[bytes] = app["frame_queue"]
     loop = asyncio.get_event_loop()
     while True:
         frame = await loop.run_in_executor(None, frame_queue.get)
-        if current_client is not ws:
-            break
-        try:
-            await ws.send_bytes(frame)
-        except Exception:
-            break
+        if not connected_clients:
+            continue
+        dead: list[web.WebSocketResponse] = []
+        for ws in connected_clients:
+            try:
+                await ws.send_bytes(frame)
+            except Exception:
+                dead.append(ws)
+        for ws in dead:
+            connected_clients.discard(ws)
+            log.info("Removed dead client (%d viewers)", len(connected_clients))
+
+
+async def start_broadcast(app: web.Application) -> None:
+    app["broadcast_task"] = asyncio.create_task(broadcast_loop(app))
+
+
+async def stop_broadcast(app: web.Application) -> None:
+    app["broadcast_task"].cancel()
+    try:
+        await app["broadcast_task"]
+    except asyncio.CancelledError:
+        pass
 
 
 async def stream_handler(request: web.Request) -> web.StreamResponse:
-    """WebSocket at /stream: single client, raw JPEG frames."""
-    global current_client
-    ws = web.WebSocketResponse()
+    """WebSocket at /stream: multiple concurrent viewers, raw JPEG frames."""
+    ws = web.WebSocketResponse(heartbeat=20.0)
     await ws.prepare(request)
 
-    if current_client is not None:
-        log.info("Replacing existing client")
-        await current_client.close()
-    current_client = ws
-    log.info("Client connected")
+    connected_clients.add(ws)
+    log.info("Client connected (%d viewers)", len(connected_clients))
 
     try:
-        frame_queue = request.app["frame_queue"]
-        await send_loop(ws, frame_queue)
+        async for _msg in ws:
+            pass
     finally:
-        if current_client is ws:
-            current_client = None
-            log.info("Client disconnected")
+        connected_clients.discard(ws)
+        log.info("Client disconnected (%d viewers)", len(connected_clients))
     return ws
+
+
+async def health_handler(_request: web.Request) -> web.Response:
+    """GET /health — JSON health check with viewer count and uptime."""
+    return web.Response(
+        text=json.dumps({
+            "status": "ok",
+            "viewers": len(connected_clients),
+            "uptime_seconds": round(time.time() - server_start_time, 1),
+        }),
+        content_type="application/json",
+    )
 
 
 async def index_handler(_request: web.Request) -> web.FileResponse:
@@ -111,12 +141,49 @@ async def index_handler(_request: web.Request) -> web.FileResponse:
     return web.FileResponse(os.path.join(STATIC_DIR, "index.html"))
 
 
+def setup_ngrok() -> Optional[str]:
+    """Start ngrok tunnel if NGROK_AUTHTOKEN and NGROK_DOMAIN are set. Returns public URL or None."""
+    authtoken = os.environ.get("NGROK_AUTHTOKEN")
+    domain = os.environ.get("NGROK_DOMAIN")
+
+    if not authtoken or not domain:
+        log.info("ngrok not configured — running in local-only mode")
+        return None
+
+    try:
+        from pyngrok import ngrok
+        ngrok.set_auth_token(authtoken)
+        tunnel = ngrok.connect(addr=str(PORT), proto="http", hostname=domain)
+        log.info("ngrok tunnel active: %s", tunnel.public_url)
+        return tunnel.public_url
+    except Exception as exc:
+        log.error("Failed to start ngrok tunnel: %s", exc)
+        return None
+
+
+def teardown_ngrok(public_url: Optional[str]) -> None:
+    """Disconnect ngrok tunnel and kill the process."""
+    if public_url is None:
+        return
+    try:
+        from pyngrok import ngrok
+        ngrok.disconnect(public_url)
+        ngrok.kill()
+        log.info("ngrok tunnel closed")
+    except Exception:
+        pass
+
+
 def create_app(frame_queue: queue.Queue[bytes]) -> web.Application:
     app = web.Application()
     app["frame_queue"] = frame_queue
+    app["public_url"] = None
 
-    # WebSocket first so /stream is exact
+    app.on_startup.append(start_broadcast)
+    app.on_cleanup.append(stop_broadcast)
+
     app.router.add_get("/stream", stream_handler)
+    app.router.add_get("/health", health_handler)
 
     if os.path.isdir(STATIC_DIR):
         app.router.add_get("/", index_handler)
@@ -140,11 +207,17 @@ def create_app(frame_queue: queue.Queue[bytes]) -> web.Application:
 
 
 async def main() -> None:
+    global server_start_time
+    server_start_time = time.time()
+
     frame_queue: queue.Queue[bytes] = queue.Queue(maxsize=FRAME_QUEUE_MAXSIZE)
     t = threading.Thread(target=capture_loop, args=(frame_queue,), daemon=True)
     t.start()
 
+    public_url = setup_ngrok()
+
     app = create_app(frame_queue)
+    app["public_url"] = public_url
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, HOST, PORT)
@@ -154,7 +227,11 @@ async def main() -> None:
     log.info("WebSocket at ws://%s:%s/stream", HOST, PORT)
     if os.path.isdir(STATIC_DIR):
         log.info("Static app served at / (use with ngrok for remote access)")
-    await asyncio.Future()
+
+    try:
+        await asyncio.Future()
+    finally:
+        teardown_ngrok(public_url)
 
 
 if __name__ == "__main__":

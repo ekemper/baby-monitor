@@ -1,0 +1,121 @@
+---
+description: Enforcement protocol for implementing a planning doc — activates when the user asks you to implement a plan, execute a plan, or build from a planning doc
+alwaysApply: false
+---
+
+# Plan implementation protocol
+
+When the user asks you to implement a plan (a markdown document from `plans/`), you are the **implementing agent**. The plan was created using the `planning` skill (`.cursor/skills/planning/`) and is your spec. Follow this protocol exactly.
+
+## Detect plan type
+
+First, determine what you've been given:
+
+- **Phase implementation doc** (`<name>-phase-N-IMPL.md`): a self-contained spec for one phase of a larger plan. This is the most common handoff for complex work. Implement only this phase.
+- **Simple plan** (`<name>-PLAN.md` with inline deliverables, no phase docs): a single-file plan. Implement the full plan.
+- **Master plan** (`<name>-PLAN.md` that references phase docs): do NOT implement directly. Tell the user: *"This is a master plan with separate phase docs. Which phase should I implement? I see: [list phase docs]."*
+
+If the user says "implement the whole plan" for a master plan with phase docs, implement **one phase at a time in separate passes**. Start with Phase 1, complete the self-audit, and stop. The user will hand you the next phase doc in a new conversation.
+
+## Phase 0 — Extract the contract (MANDATORY, do this FIRST)
+
+1. Read the plan or phase document **in full** before writing any code.
+2. Locate the **Deliverables Manifest** section. If the plan lacks one, stop and tell the user: *"This plan has no deliverables manifest. I need a numbered list of every file to create, modify, or delete before I can begin. Should I extract one from the plan for your approval, or do you want to add it?"*
+3. For phase docs: check the **Prerequisites** section. Verify that prior phase outputs exist (check for the files/APIs listed). If prerequisites are not met, stop and tell the user: *"Phase N requires [X] from Phase N-1, but I can't find it. Has Phase N-1 been implemented?"*
+4. Copy the manifest into a TODO list (use the todo tool). Each deliverable becomes one todo item with its exact file path, operation (NEW/MOD/DELETE), and one-line description.
+5. Read the TODO list back to the user and ask: *"This is my implementation checklist extracted from the plan. Should I proceed, or do you want to adjust anything?"*
+6. **Do not write any code until the user confirms.**
+
+## Phase 1 — Implement deliverables
+
+Check whether the plan/phase doc defines **Parallel tracks**. This determines the execution strategy.
+
+### Sequential execution (no parallel tracks)
+
+Work through the TODO list **sequentially by item number**. For each deliverable:
+
+1. Re-read the relevant section from the plan/phase document. Do not rely on your memory of it — re-read it from the file.
+2. Implement exactly what the plan specifies. Match file paths, module names, function signatures, and artifact types (rule vs skill, router vs service, etc.) to what the plan says.
+3. After completing each deliverable, mark it complete in your TODO list.
+4. For simple plans with multiple phases: at the end of each phase, pause and report to the user:
+   - What was completed in this phase
+   - Any deviations or issues encountered
+   - Ask: *"Phase N complete. Should I continue to Phase N+1?"*
+
+### Parallel execution (phase has parallel tracks)
+
+When the plan defines parallel tracks with interface contracts, use sub-agents to implement tracks simultaneously.
+
+**Step 1: Establish interface contracts.** Before launching any sub-agents, implement or codify any interface contracts defined in the plan. These are the boundaries parallel tracks build against. Depending on the plan, this may mean:
+- Writing TypeScript type definitions or Python models for shared API shapes
+- Creating stub files or placeholder endpoints that return the agreed contract shape
+- Writing schema definitions that both tracks will use
+- Or simply confirming the contracts are clearly stated in the plan (no code needed — the sub-agents read the plan)
+
+**Step 2: Build sub-agent prompts.** For each track, construct a prompt that includes:
+- The track's deliverables from the manifest (exact file paths and descriptions)
+- The relevant technical detail section from the plan (copy the text — don't reference the file, since sub-agents may not have the same context)
+- The interface contracts this track depends on (exact shapes, paths, status codes)
+- The hard rules from this protocol (never substitute, never skip, never add unplanned files, ask if ambiguous)
+- Instruction to report back: what was created, any deviations, any issues
+
+**Step 3: Launch sub-agents in parallel.** Use the Task tool to launch one sub-agent per track. Choose the sub-agent type recommended in the plan (`generalPurpose` for code, `shell` for scripts, `browser-use` for UI work). Launch all independent tracks in a **single message** so they execute concurrently.
+
+**Step 4: Collect results.** When sub-agents complete, review each result:
+- Verify the reported deliverables match the plan
+- Check for deviations or issues flagged by the sub-agent
+- Mark completed items in the TODO list
+
+**Step 5: Integration verification at sync points.** After all tracks in a parallel batch complete:
+- Verify that parallel tracks produced compatible code (e.g., frontend calls match the API contract the backend implemented)
+- Run any integration checks specified in the plan
+- Fix integration issues before proceeding to the next batch or phase
+- Report to the user: *"Parallel tracks A, B, C complete. Integration verified. [Any issues]. Should I continue?"*
+
+**When NOT to parallelize**, even if the plan defines tracks:
+- If the user explicitly asks for sequential execution
+- If interface contracts are ambiguous or missing (ask the user to clarify first)
+- If tracks have implicit dependencies the plan didn't capture (flag to the user)
+
+## Hard rules — never violate these
+
+- **Never substitute a different artifact type** than what the plan specifies. If the plan says "create a Cursor skill at `.cursor/skills/foo/SKILL.md`", do not create a Cursor rule at `.cursor/rules/foo.mdc` instead. If you believe the plan's choice is wrong, say so and ask — do not silently substitute.
+- **Never skip a deliverable.** If a deliverable seems unnecessary or redundant, say so and ask — do not silently omit it.
+- **Never add unplanned deliverables** of consequence (new services, new components, new config files) without telling the user. Minor implementation details (helper functions within a planned file, imports) are fine.
+- **If anything is ambiguous, stop and ask.** Do not guess, do not improvise, do not default to a familiar pattern. The plan is the spec. If the spec is unclear, escalate to the user.
+
+## Phase 2 — Self-audit (MANDATORY, do this LAST)
+
+After all deliverables are complete:
+
+1. Re-read the **Deliverables Manifest** from the plan/phase document (not from memory).
+2. For each manifest item, verify the file exists at the specified path and the content matches the plan's intent.
+3. Check for manifest items you missed.
+4. Check for files you created that are NOT in the manifest — flag these to the user.
+5. For phase docs: verify the **Acceptance Criteria** — check each criterion and report pass/fail.
+6. For phase docs: verify the **Interface Contract** — confirm that the outputs later phases depend on are in place.
+7. Report a final summary:
+
+```
+## Implementation audit
+- Plan/phase: <filename>
+- Execution mode: sequential / parallel (N tracks)
+- Deliverables completed: X/Y
+- Acceptance criteria: X/Y passed [list any failures]
+- Deviations from plan: [list, or "None"]
+- Unplanned files created: [list, or "None"]
+- Items skipped: [list with reason, or "None"]
+- Interface contract satisfied: [Yes/No, with details]
+- Integration verification: [passed / failed, with details] (parallel only)
+- Open issues: [list, or "None"]
+- Ready for next phase: [Yes/No]
+```
+
+## Context management
+
+Long plans strain context windows. To counteract this:
+
+- **Phase docs are preferred** for complex work. They are self-contained and small enough to hold in full context.
+- **Re-read plan sections** before implementing each deliverable — do not rely on what you remember from the initial read.
+- **Use the TODO list** as your anchor. If you lose track of where you are, read the TODO list, not the full plan.
+- If implementing a simple plan that exceeds ~400 lines, process it one phase at a time: read the phase, implement it, then move to the next phase with a fresh read.

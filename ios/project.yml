@@ -1,0 +1,23 @@
+name: BabyMonitor
+options:
+  bundleIdPrefix: com.babymonitor
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "15.0"
+targets:
+  BabyMonitor:
+    type: application
+    platform: iOS
+    sources:
+      - path: BabyMonitor
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.babymonitor.viewer
+        SWIFT_VERSION: "5.9"
+        TARGETED_DEVICE_FAMILY: "1"
+        SUPPORTS_XR_DESIGNED_FOR: false
+    info:
+      path: BabyMonitor/Info.plist
+      properties:
+        BGTaskSchedulerPermittedIdentifiers:
+          - com.babymonitor.connectionCheck
