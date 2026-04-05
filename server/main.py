@@ -1,34 +1,32 @@
 """
-Video-only WebSocket stream from USB webcam.
-Supports multiple concurrent viewers. Serves static (React build) + WebSocket
-on one port. Optional integrated ngrok tunnel via .env config.
+Video-only WebSocket stream from USB webcam via ffmpeg.
+Supports multiple concurrent viewers. Optional integrated ngrok tunnel via .env config.
 """
 import asyncio
 import json
 import logging
 import os
 import queue
+import shutil
+import subprocess
 import sys
 import threading
 import time
 from typing import Optional
 
-import cv2
 from aiohttp import web
 from dotenv import load_dotenv
 
-# --- Constants ---
-CAMERA_INDEX = 0
+DEVICE = "/dev/video0"
 WIDTH = 640
 HEIGHT = 480
 FPS = 15
-HOST = "127.0.0.1"
+HOST = "0.0.0.0"
 PORT = 8765
 
 FRAME_QUEUE_MAXSIZE = 2
 
 SERVER_DIR = os.path.dirname(os.path.abspath(__file__))
-STATIC_DIR = os.path.join(SERVER_DIR, "..", "client", "dist")
 
 load_dotenv(dotenv_path=os.path.join(SERVER_DIR, ".env"))
 
@@ -42,38 +40,60 @@ log = logging.getLogger(__name__)
 connected_clients: set[web.WebSocketResponse] = set()
 server_start_time: float = 0.0
 
+FFMPEG = shutil.which("ffmpeg")
+SOI = b"\xff\xd8"
+EOI = b"\xff\xd9"
+
 
 def capture_loop(frame_queue: queue.Queue[bytes]) -> None:
-    """Run in thread: read from camera, encode JPEG, put in queue (drop oldest if full)."""
-    cap = cv2.VideoCapture(CAMERA_INDEX)
-    if not cap.isOpened():
-        log.error("Could not open camera (index %d). Is it in use or disconnected?", CAMERA_INDEX)
+    """Run in thread: read MJPEG frames from ffmpeg, split on JPEG markers, put in queue."""
+    if not FFMPEG:
+        log.error("ffmpeg not found. Install with: sudo apt install ffmpeg")
         sys.exit(1)
 
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, WIDTH)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT)
-    cap.set(cv2.CAP_PROP_FPS, FPS)
-    log.info("Capture started: camera %d, %dx%d @ %d FPS", CAMERA_INDEX, WIDTH, HEIGHT, FPS)
+    cmd = [
+        FFMPEG,
+        "-f", "v4l2",
+        "-input_format", "mjpeg",
+        "-video_size", f"{WIDTH}x{HEIGHT}",
+        "-framerate", str(FPS),
+        "-i", DEVICE,
+        "-c:v", "copy",
+        "-f", "image2pipe",
+        "-vcodec", "mjpeg",
+        "-",
+    ]
+    log.info("Capture starting: %s %dx%d @ %d FPS", DEVICE, WIDTH, HEIGHT, FPS)
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    buf = bytearray()
 
     while True:
-        ret, frame = cap.read()
-        if not ret or frame is None:
-            continue
-        ok, buf = cv2.imencode(".jpg", frame)
-        if not ok or buf is None:
-            continue
-        jpeg = buf.tobytes()
-        try:
-            frame_queue.put(jpeg, block=False)
-        except queue.Full:
+        chunk = proc.stdout.read(4096)
+        if not chunk:
+            log.error("ffmpeg process exited unexpectedly")
+            sys.exit(1)
+        buf.extend(chunk)
+        while True:
+            soi = buf.find(SOI)
+            if soi == -1:
+                buf.clear()
+                break
+            eoi = buf.find(EOI, soi + 2)
+            if eoi == -1:
+                break
+            frame = bytes(buf[soi : eoi + 2])
+            buf = buf[eoi + 2 :]
             try:
-                frame_queue.get_nowait()
-            except queue.Empty:
-                pass
-            try:
-                frame_queue.put(jpeg, block=False)
+                frame_queue.put(frame, block=False)
             except queue.Full:
-                pass
+                try:
+                    frame_queue.get_nowait()
+                except queue.Empty:
+                    pass
+                try:
+                    frame_queue.put(frame, block=False)
+                except queue.Full:
+                    pass
 
 
 async def broadcast_loop(app: web.Application) -> None:
@@ -136,13 +156,8 @@ async def health_handler(_request: web.Request) -> web.Response:
     )
 
 
-async def index_handler(_request: web.Request) -> web.FileResponse:
-    """Serve React index.html for ngrok (same origin as /stream)."""
-    return web.FileResponse(os.path.join(STATIC_DIR, "index.html"))
-
-
 def setup_ngrok() -> Optional[str]:
-    """Start ngrok tunnel if NGROK_AUTHTOKEN and NGROK_DOMAIN are set. Returns public URL or None."""
+    """Start ngrok tunnel if NGROK_AUTHTOKEN and NGROK_DOMAIN are set."""
     authtoken = os.environ.get("NGROK_AUTHTOKEN")
     domain = os.environ.get("NGROK_DOMAIN")
 
@@ -185,24 +200,6 @@ def create_app(frame_queue: queue.Queue[bytes]) -> web.Application:
     app.router.add_get("/stream", stream_handler)
     app.router.add_get("/health", health_handler)
 
-    if os.path.isdir(STATIC_DIR):
-        app.router.add_get("/", index_handler)
-        assets_path = os.path.join(STATIC_DIR, "assets")
-        if os.path.isdir(assets_path):
-            app.router.add_static("/assets", assets_path, name="assets")
-        favicon = os.path.join(STATIC_DIR, "vite.svg")
-        if os.path.isfile(favicon):
-            app.router.add_get("/vite.svg", lambda r: web.FileResponse(favicon))
-        log.info("Serving static from %s (for ngrok)", STATIC_DIR)
-    else:
-        async def no_static(_: web.Request) -> web.Response:
-            return web.Response(
-                text="Static not found. Run: cd client && npm run build",
-                content_type="text/plain",
-                status=404,
-            )
-        app.router.add_get("/", no_static)
-
     return app
 
 
@@ -225,8 +222,6 @@ async def main() -> None:
 
     log.info("Server listening on http://%s:%s", HOST, PORT)
     log.info("WebSocket at ws://%s:%s/stream", HOST, PORT)
-    if os.path.isdir(STATIC_DIR):
-        log.info("Static app served at / (use with ngrok for remote access)")
 
     try:
         await asyncio.Future()

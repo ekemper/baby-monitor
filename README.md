@@ -1,53 +1,26 @@
-# Baby Monitor (video-only)
+# Baby Monitor
 
-USB webcam → Python server → WebSocket → React app or iOS app. Video only. Supports multiple simultaneous viewers. Works locally and over the internet via integrated ngrok tunnel.
+USB webcam → ffmpeg → Python server → WebSocket → iOS app. Video only, multiple simultaneous viewers, remote access via ngrok.
 
 ## Prerequisites
 
+- Raspberry Pi with Raspberry Pi OS
+- USB webcam
+- `ffmpeg` (`sudo apt install ffmpeg`)
 - Python 3.9+
-- Node.js 18+ (for the React client)
-- USB webcam (default camera index 0)
 - [ngrok account](https://ngrok.com/) with a free static domain (for remote access)
 
-## Run locally
+## Setup
 
-### 1. Start the Python server
-
-```bash
-cd server
-pip install -r requirements.txt
-python main.py
-```
-
-Server binds to `127.0.0.1:8765`. WebSocket at `ws://127.0.0.1:8765/stream`.
-
-### 2. Start the React app (dev)
-
-In a second terminal:
+### 1. Clone and configure
 
 ```bash
-cd client
-npm install
-npm run dev
+git clone <repo-url> ~/baby-monitor
+cd ~/baby-monitor/server
+cp .env.example .env
 ```
 
-Open the URL shown (e.g. http://localhost:5173). The app connects to `ws://localhost:8765/stream` and displays the stream.
-
-Multiple browser tabs can view the stream simultaneously.
-
----
-
-## Run with ngrok (remote access)
-
-The server manages the ngrok tunnel automatically — no separate `ngrok` command needed.
-
-### 1. Configure ngrok credentials
-
-```bash
-cp server/.env.example server/.env
-```
-
-Edit `server/.env` with your ngrok auth token and reserved domain:
+Edit `server/.env` with your ngrok credentials:
 
 ```
 NGROK_AUTHTOKEN=your-token-here
@@ -56,41 +29,50 @@ NGROK_DOMAIN=your-domain.ngrok-free.dev
 
 Get your auth token at [dashboard.ngrok.com/get-started/your-authtoken](https://dashboard.ngrok.com/get-started/your-authtoken). Claim a free static domain at [dashboard.ngrok.com/domains](https://dashboard.ngrok.com/domains).
 
-### 2. Build the React app
+### 2. Install dependencies
 
 ```bash
-cd client
-npm install
-npm run build
+sudo apt install -y ffmpeg
+pip3 install --break-system-packages -r server/requirements.txt
 ```
-
-This creates `client/dist/`.
 
 ### 3. Start the server
 
 ```bash
 cd server
-pip install -r requirements.txt
-python main.py
+python3 main.py
 ```
 
-The server starts the ngrok tunnel automatically and logs the public URL. Open that URL in any browser to view the stream remotely.
+The server captures from the USB webcam via ffmpeg, starts the ngrok tunnel, and serves the video stream over WebSocket. If `.env` is missing or empty, it runs in local-only mode.
 
-If `.env` is missing or empty, the server runs in local-only mode (no tunnel).
+## Deploy from Mac
 
----
+The `deploy.sh` script pushes code to the Pi over git:
+
+```bash
+./deploy.sh
+```
+
+It pushes to origin, pulls on the Pi, ensures ffmpeg is installed, installs Python deps, and syncs the `.env` file. Requires `sshpass` (auto-installed on first run via `brew install hudochenkov/sshpass/sshpass`).
 
 ## API
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/stream` | WebSocket | Binary JPEG frames, one per message. Connect multiple clients simultaneously. |
-| `/health` | GET | JSON health check: `{"status": "ok", "viewers": N, "uptime_seconds": N}` |
-| `/` | GET | Serves the built React app (from `client/dist/`) |
+| `/stream` | WebSocket | Binary JPEG frames, one per message. Multiple concurrent viewers. |
+| `/health` | GET | `{"status": "ok", "viewers": N, "uptime_seconds": N}` |
 
-## Config (server)
+## Config
 
-Constants are at the top of `server/main.py`: camera index `0`, 640×480 @ 15 FPS, port 8765.
+Constants at the top of `server/main.py`:
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `DEVICE` | `/dev/video0` | V4L2 device path |
+| `WIDTH` | `640` | Capture width |
+| `HEIGHT` | `480` | Capture height |
+| `FPS` | `15` | Capture framerate |
+| `PORT` | `8765` | Server port |
 
 Environment variables (in `server/.env`):
 
@@ -98,3 +80,4 @@ Environment variables (in `server/.env`):
 |----------|-------------|
 | `NGROK_AUTHTOKEN` | ngrok auth token (required for remote access) |
 | `NGROK_DOMAIN` | ngrok reserved domain (required for remote access) |
+| `PI_PASSWORD` | Pi SSH password (used by `deploy.sh`) |
