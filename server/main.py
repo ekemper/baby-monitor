@@ -18,9 +18,9 @@ from aiohttp import web
 from dotenv import load_dotenv
 
 DEVICE = "/dev/video0"
-WIDTH = 640
-HEIGHT = 480
-FPS = 15
+WIDTH = 320
+HEIGHT = 240
+FPS = 10
 HOST = "0.0.0.0"
 PORT = 8765
 
@@ -53,18 +53,22 @@ def capture_loop(frame_queue: queue.Queue[bytes]) -> None:
 
     cmd = [
         FFMPEG,
+        "-hide_banner", "-nostats", "-loglevel", "error",
+        "-probesize", "32", "-analyzeduration", "0",
         "-f", "v4l2",
         "-input_format", "mjpeg",
         "-video_size", f"{WIDTH}x{HEIGHT}",
         "-framerate", str(FPS),
+        "-thread_queue_size", "8",
         "-i", DEVICE,
         "-c:v", "copy",
+        "-threads", "1",
         "-f", "image2pipe",
         "-vcodec", "mjpeg",
         "-",
     ]
     log.info("Capture starting: %s %dx%d @ %d FPS", DEVICE, WIDTH, HEIGHT, FPS)
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     buf = bytearray()
 
     while True:
@@ -210,11 +214,12 @@ async def main() -> None:
     global server_start_time
     server_start_time = time.time()
 
+    # Start ngrok first — let it settle before launching ffmpeg to avoid OOM spike
+    public_url = setup_ngrok()
+
     frame_queue: queue.Queue[bytes] = queue.Queue(maxsize=FRAME_QUEUE_MAXSIZE)
     t = threading.Thread(target=capture_loop, args=(frame_queue,), daemon=True)
     t.start()
-
-    public_url = setup_ngrok()
 
     app = create_app(frame_queue)
     app["public_url"] = public_url
