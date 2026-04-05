@@ -61,6 +61,7 @@ def capture_loop(frame_queue: queue.Queue[bytes]) -> None:
     log.info("Capture starting: %s %dx%d (v4l2-ctl MJPEG)", DEVICE, WIDTH, HEIGHT)
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     buf = bytearray()
+    frame_count = 0
 
     while True:
         chunk = proc.stdout.read(4096)
@@ -78,6 +79,12 @@ def capture_loop(frame_queue: queue.Queue[bytes]) -> None:
                 break
             frame = bytes(buf[soi : eoi + 2])
             buf = buf[eoi + 2 :]
+            frame_count += 1
+            if frame_count <= 5 or frame_count % 100 == 0:
+                log.info("Frame %d: %d bytes", frame_count, len(frame))
+            if frame_count <= 3:
+                with open(f"/tmp/live_frame{frame_count}.jpg", "wb") as f:
+                    f.write(frame)
             try:
                 frame_queue.put(frame, block=False)
             except queue.Full:
